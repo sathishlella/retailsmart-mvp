@@ -17,13 +17,24 @@ const BatchTracking = ({ batches, setBatches, products, defaultOpenForm = false,
     if (!showForm && defaultOpenForm && onCloseForm) onCloseForm()
   }, [showForm])
 
+  // Prefill expiry date from product shelfLife when selecting a product
+  useEffect(() => {
+    if (!newBatch.productId) return
+    if (newBatch.expiryDate) return
+    const prod = products.find(p => String(p.id) === String(newBatch.productId))
+    if (!prod) return
+    const d = new Date()
+    d.setDate(d.getDate() + (Number(prod.shelfLife) || 30))
+    setNewBatch(prev => ({ ...prev, expiryDate: d.toISOString().slice(0, 10) }))
+  }, [newBatch.productId, products])
+
   const handleAddBatch = (e) => {
     e.preventDefault()
     if (!newBatch.productId || !newBatch.expiryDate) return
     const selected = products.find(p => String(p.id) === String(newBatch.productId))
     if (!selected) return
     const batch = {
-      id: String(Date.now()),
+      id: String(Date.now()) + Math.random().toString(36).slice(2, 6),
       productId: String(selected.id),
       quantity: Number(newBatch.quantity) || 1,
       expiryDate: newBatch.expiryDate,
@@ -43,10 +54,10 @@ const BatchTracking = ({ batches, setBatches, products, defaultOpenForm = false,
     const exp = new Date(expiryDate)
     const now = new Date()
     const days = Math.ceil((exp - now) / (1000 * 60 * 60 * 24))
-    if (isNaN(days)) return { label: 'Unknown', color: 'gray' }
-    if (days < 0) return { label: 'Expired', color: 'red' }
-    if (days <= 7) return { label: 'Expiring soon', color: 'yellow' }
-    return { label: 'Fresh', color: 'green' }
+    if (isNaN(days)) return { label: 'Unknown', cls: 'bg-gray-100 text-gray-700' }
+    if (days < 0) return { label: 'Expired', cls: 'bg-red-100 text-red-700' }
+    if (days <= 7) return { label: 'Expiring soon', cls: 'bg-yellow-100 text-yellow-700' }
+    return { label: 'Fresh', cls: 'bg-green-100 text-green-700' }
   }
 
   const batchesWithProduct = useMemo(() => {
@@ -97,74 +108,3 @@ const BatchTracking = ({ batches, setBatches, products, defaultOpenForm = false,
                 min="1"
                 className="mt-1 w-full rounded-md border-gray-300"
                 value={newBatch.quantity}
-                onChange={e => setNewBatch({ ...newBatch, quantity: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
-              <input
-                type="date"
-                className="mt-1 w-full rounded-md border-gray-300"
-                value={newBatch.expiryDate}
-                onChange={e => setNewBatch({ ...newBatch, expiryDate: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Location</label>
-              <select
-                className="mt-1 w-full rounded-md border-gray-300"
-                value={newBatch.location}
-                onChange={e => setNewBatch({ ...newBatch, location: e.target.value })}
-              >
-                <option>Front Shelf</option>
-                <option>Back Shelf</option>
-                <option>Cold Storage</option>
-                <option>Warehouse</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <button type="submit" className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">
-                Save Batch
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      <div className="bg-white rounded-lg shadow divide-y">
-        {batchesWithProduct.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">No batches yet.</div>
-        ) : (
-          batchesWithProduct.map(b => {
-            const status = getBatchStatus(b.expiryDate)
-            return (
-              <div key={b.id} className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900">{b.product?.name || 'Unknown product'}</p>
-                  <p className="text-sm text-gray-500">
-                    Qty {b.quantity} • Expires {b.expiryDate || '—'} • {b.location}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <span className={`px-2 py-1 text-xs rounded bg-${status.color}-100 text-${status.color}-700`}>
-                    {status.label}
-                  </span>
-                  <button
-                    onClick={() => handleDeleteBatch(b.id)}
-                    className="inline-flex items-center px-2 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" /> Delete
-                  </button>
-                </div>
-              </div>
-            )
-          })
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default BatchTracking
