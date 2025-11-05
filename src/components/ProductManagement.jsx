@@ -14,13 +14,12 @@ const ProductManagement = ({ products, setProducts, defaultOpenForm = false, onC
   useEffect(() => {
     if (defaultOpenForm) setShowForm(true)
   }, [defaultOpenForm])
-
   useEffect(() => {
     if (!showForm && defaultOpenForm && onCloseForm) onCloseForm()
   }, [showForm, defaultOpenForm, onCloseForm])
 
   const categories = [
-    'Dairy','Beverages','Bakery','Produce','Snacks','Frozen',
+    'Dairy','Beverages','Liquor','Bakery','Produce','Snacks','Frozen',
     'Meat','Seafood','Pantry','Household','Personal Care'
   ]
 
