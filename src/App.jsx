@@ -12,15 +12,88 @@ function App() {
   const [openProductForm, setOpenProductForm] = useState(false)
   const [openBatchForm, setOpenBatchForm] = useState(false)
 
-  // Load data
+  // --------------------
+  // Sample data seeding
+  // --------------------
+  const categories = [
+    'Dairy','Beverages','Bakery','Produce','Snacks','Frozen',
+    'Meat','Seafood','Pantry','Household','Personal Care'
+  ]
+  const locations = ['Front Shelf','Back Shelf','Cold Storage','Warehouse']
+
+  const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
+  const randomBarcode = () =>
+    Array.from({ length: 12 }, () => randInt(0, 9)).join('')
+
+  const addDays = (date, days) => {
+    const d = new Date(date)
+    d.setDate(d.getDate() + days)
+    return d
+  }
+  const toYMD = (d) => new Date(d).toISOString().slice(0, 10)
+
+  function seedSampleData(count = 100) {
+    const nouns = [
+      'Milk','Yogurt','Juice','Cola','Bread','Buns','Croissant','Apple','Banana','Tomato',
+      'Chips','Cookies','Cereal','Rice','Pasta','Ice Cream','Chicken','Beef','Salmon',
+      'Shampoo','Soap','Detergent','Toothpaste','Tea','Coffee','Water','Cheese','Butter','Eggs'
+    ]
+    const prods = []
+    for (let i = 1; i <= count; i++) {
+      const noun = nouns[randInt(0, nouns.length - 1)]
+      const category = categories[randInt(0, categories.length - 1)]
+      prods.push({
+        id: `P${Date.now()}_${i}`,
+        name: `${noun} ${i}`,
+        barcode: randomBarcode(),
+        category,
+        // 7–120 days
+        shelfLife: randInt(7, 120)
+      })
+    }
+
+    const bchs = []
+    const now = new Date()
+    for (const p of prods) {
+      const batchesForP = randInt(1, 3)
+      for (let j = 0; j < batchesForP; j++) {
+        // Offset expiry between -30 and +120 days to ensure variety
+        const offsetDays = randInt(-30, 120)
+        const expiry = toYMD(addDays(now, offsetDays))
+        bchs.push({
+          id: `B${p.id}_${j}_${randInt(1000, 9999)}`,
+          productId: p.id,
+          quantity: randInt(5, 50),
+          expiryDate: expiry,
+          location: locations[randInt(0, locations.length - 1)]
+        })
+      }
+    }
+    return { prods, bchs }
+  }
+
+  // Load from localStorage; seed if empty
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
       const savedProducts = localStorage.getItem('retailsmart-products')
       const savedBatches = localStorage.getItem('retailsmart-batches')
-      if (savedProducts) setProducts(JSON.parse(savedProducts))
-      if (savedBatches) setBatches(JSON.parse(savedBatches))
-    } catch {}
+
+      if (savedProducts && savedBatches) {
+        setProducts(JSON.parse(savedProducts))
+        setBatches(JSON.parse(savedBatches))
+      } else {
+        const { prods, bchs } = seedSampleData(100)
+        setProducts(prods)
+        setBatches(bchs)
+        localStorage.setItem('retailsmart-products', JSON.stringify(prods))
+        localStorage.setItem('retailsmart-batches', JSON.stringify(bchs))
+      }
+    } catch {
+      const { prods, bchs } = seedSampleData(100)
+      setProducts(prods)
+      setBatches(bchs)
+    }
   }, [])
 
   // Persist
@@ -81,8 +154,8 @@ function App() {
             <Dashboard
               products={products}
               batches={batches}
-              onAddProduct={() => { setCurrentView('products'); setOpenProductForm(true); }}
-              onAddBatch={() => { setCurrentView('batches'); setOpenBatchForm(true); }}
+              onAddProduct={() => { setCurrentView('products'); setOpenProductForm(true) }}
+              onAddBatch={() => { setCurrentView('batches'); setOpenBatchForm(true) }}
               onViewAnalytics={() => setCurrentView('analytics')}
             />
           )}
@@ -106,10 +179,3 @@ function App() {
           {currentView === 'analytics' && (
             <Analytics products={products} batches={batches} />
           )}
-        </div>
-      </main>
-    </div>
-  )
-}
-
-export default App
