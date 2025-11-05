@@ -2,13 +2,13 @@ import React from 'react'
 import { AlertTriangle, Package, TrendingUp, DollarSign, Plus, RotateCcw } from 'lucide-react'
 
 const Dashboard = ({
+  storeMode,
   products,
   batches,
   onAddProduct,
   onAddBatch,
   onViewAnalytics,
   onResetDemoData,
-  // NEW handlers for stat-card clicks
   onOpenAllProducts,
   onOpenAllBatches,
   onOpenProductsAtRiskSoon,
@@ -16,6 +16,7 @@ const Dashboard = ({
   onOpenBatchesExpiringSoon,
   onOpenBatchesExpired
 }) => {
+  const isFashion = storeMode === 'fashion'
   const daysUntil = (date) => {
     const d = new Date(date)
     const now = new Date()
@@ -33,11 +34,11 @@ const Dashboard = ({
 
   const stats = [
     { key: 'totalProducts', label: 'Total Products', value: products.length, icon: Package, cls: 'text-blue-600', onClick: onOpenAllProducts },
-    { key: 'totalBatches', label: 'Total Batches', value: batches.length, icon: TrendingUp, cls: 'text-indigo-600', onClick: onOpenAllBatches },
-    { key: 'batchesSoon', label: 'Batches Expiring Soon', value: expiringSoonBatches.length, icon: AlertTriangle, cls: 'text-yellow-600', onClick: onOpenBatchesExpiringSoon },
-    { key: 'batchesExpired', label: 'Expired Batches', value: expiredBatches.length, icon: DollarSign, cls: 'text-red-600', onClick: onOpenBatchesExpired },
-    { key: 'productsSoon', label: 'Products at Risk (Soon)', value: expiringSoonProductIds.size, icon: AlertTriangle, cls: 'text-yellow-700', onClick: onOpenProductsAtRiskSoon },
-    { key: 'productsExpired', label: 'Products with Expired Items', value: expiredProductIds.size, icon: AlertTriangle, cls: 'text-red-700', onClick: onOpenProductsWithExpired },
+    { key: 'totalBatches', label: isFashion ? 'Total Items (Lots)' : 'Total Batches', value: batches.length, icon: TrendingUp, cls: 'text-indigo-600', onClick: onOpenAllBatches },
+    { key: 'batchesSoon', label: isFashion ? 'Items Going Off-Season Soon' : 'Batches Expiring Soon', value: expiringSoonBatches.length, icon: AlertTriangle, cls: 'text-yellow-600', onClick: onOpenBatchesExpiringSoon },
+    { key: 'batchesExpired', label: isFashion ? 'Out-of-Season Items' : 'Expired Batches', value: expiredBatches.length, icon: DollarSign, cls: 'text-red-600', onClick: onOpenBatchesExpired },
+    { key: 'productsSoon', label: isFashion ? 'Product Lines Going Off-Season (Soon)' : 'Products at Risk (Soon)', value: expiringSoonProductIds.size, icon: AlertTriangle, cls: 'text-yellow-700', onClick: onOpenProductsAtRiskSoon },
+    { key: 'productsExpired', label: isFashion ? 'Product Lines with Out-of-Season Items' : 'Products with Expired Items', value: expiredProductIds.size, icon: AlertTriangle, cls: 'text-red-700', onClick: onOpenProductsWithExpired },
   ]
 
   return (
@@ -103,10 +104,14 @@ const Dashboard = ({
                 <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
                 <div className="ml-3">
                   <h4 className="text-sm font-medium text-yellow-800">
-                    {expiringSoonBatches.length} batches expiring soon • {expiringSoonProductIds.size} products affected
+                    {isFashion
+                      ? `${expiringSoonBatches.length} item lots going off-season soon • ${expiringSoonProductIds.size} product lines affected`
+                      : `${expiringSoonBatches.length} batches expiring soon • ${expiringSoonProductIds.size} products affected`}
                   </h4>
                   <p className="text-sm text-yellow-600 mt-1">
-                    Consider promotions or moving these to the front of shelves.
+                    {isFashion
+                      ? 'Consider markdowns or moving these to a Clearance collection.'
+                      : 'Consider promotions or moving these to the front of shelves.'}
                   </p>
                 </div>
               </div>
@@ -118,10 +123,14 @@ const Dashboard = ({
                 <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
                 <div className="ml-3">
                   <h4 className="text-sm font-medium text-red-800">
-                    {expiredBatches.length} batches expired • {expiredProductIds.size} products affected
+                    {isFashion
+                      ? `${expiredBatches.length} out-of-season item lots • ${expiredProductIds.size} product lines affected`
+                      : `${expiredBatches.length} batches expired • ${expiredProductIds.size} products affected`}
                   </h4>
                   <p className="text-sm text-red-600 mt-1">
-                    Remove or write-off these items to keep inventory accurate.
+                    {isFashion
+                      ? 'Move to clearance or outlet inventory.'
+                      : 'Remove or write-off these items to keep inventory accurate.'}
                   </p>
                 </div>
               </div>
@@ -134,7 +143,9 @@ const Dashboard = ({
             <Package className="h-5 w-5 text-green-600 mt-0.5" />
             <div className="ml-3">
               <h4 className="text-sm font-medium text-green-800">All good!</h4>
-              <p className="text-sm text-green-700 mt-1">No expiring or expired inventory detected.</p>
+              <p className="text-sm text-green-700 mt-1">
+                {isFashion ? 'No off-season items detected.' : 'No expiring or expired inventory detected.'}
+              </p>
             </div>
           </div>
         </div>
