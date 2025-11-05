@@ -9,27 +9,21 @@ function App() {
   const [currentView, setCurrentView] = useState('dashboard')
   const [products, setProducts] = useState([])
   const [batches, setBatches] = useState([])
+  const [openProductForm, setOpenProductForm] = useState(false)
+  const [openBatchForm, setOpenBatchForm] = useState(false)
 
-  // safe JSON parse helper
-  const safeParse = (val, fallback) => {
-    try {
-      const out = JSON.parse(val)
-      return Array.isArray(out) ? out : fallback
-    } catch {
-      return fallback
-    }
-  }
-
-  // Load from localStorage
+  // Load data
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const savedProducts = localStorage.getItem('retailsmart-products')
-    const savedBatches = localStorage.getItem('retailsmart-batches')
-    if (savedProducts) setProducts(safeParse(savedProducts, []))
-    if (savedBatches) setBatches(safeParse(savedBatches, [])) // fixed: setBatches
+    try {
+      const savedProducts = localStorage.getItem('retailsmart-products')
+      const savedBatches = localStorage.getItem('retailsmart-batches')
+      if (savedProducts) setProducts(JSON.parse(savedProducts))
+      if (savedBatches) setBatches(JSON.parse(savedBatches))
+    } catch {}
   }, [])
 
-  // Persist to localStorage
+  // Persist
   useEffect(() => {
     if (typeof window === 'undefined') return
     localStorage.setItem('retailsmart-products', JSON.stringify(products))
@@ -80,20 +74,33 @@ function App() {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {currentView === 'dashboard' && (
-            <Dashboard products={products} batches={batches} />
+            <Dashboard
+              products={products}
+              batches={batches}
+              onAddProduct={() => { setCurrentView('products'); setOpenProductForm(true); }}
+              onAddBatch={() => { setCurrentView('batches'); setOpenBatchForm(true); }}
+              onViewAnalytics={() => setCurrentView('analytics')}
+            />
           )}
           {currentView === 'products' && (
-            <ProductManagement products={products} setProducts={setProducts} />
+            <ProductManagement
+              products={products}
+              setProducts={setProducts}
+              defaultOpenForm={openProductForm}
+              onCloseForm={() => setOpenProductForm(false)}
+            />
           )}
           {currentView === 'batches' && (
             <BatchTracking
               batches={batches}
               setBatches={setBatches}
               products={products}
+              defaultOpenForm={openBatchForm}
+              onCloseForm={() => setOpenBatchForm(false)}
             />
           )}
           {currentView === 'analytics' && (
