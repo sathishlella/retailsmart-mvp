@@ -1,7 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2, Search, Package, X } from 'lucide-react'
 
-const ProductManagement = ({ products, setProducts, defaultOpenForm = false, onCloseForm }) => {
+const ProductManagement = ({
+  products,
+  setProducts,
+  defaultOpenForm = false,
+  onCloseForm,
+  // NEW:
+  productIdFilter = null,     // array of product ids to include, or null for all
+  filterLabel = null,         // banner text when filtered
+  onClearFilter = null
+}) => {
   const [showForm, setShowForm] = useState(Boolean(defaultOpenForm))
   const [searchTerm, setSearchTerm] = useState('')
   const [newProduct, setNewProduct] = useState({
@@ -14,6 +23,7 @@ const ProductManagement = ({ products, setProducts, defaultOpenForm = false, onC
   useEffect(() => {
     if (defaultOpenForm) setShowForm(true)
   }, [defaultOpenForm])
+
   useEffect(() => {
     if (!showForm && defaultOpenForm && onCloseForm) onCloseForm()
   }, [showForm, defaultOpenForm, onCloseForm])
@@ -23,13 +33,19 @@ const ProductManagement = ({ products, setProducts, defaultOpenForm = false, onC
     'Meat','Seafood','Pantry','Household','Personal Care'
   ]
 
+  const baseList = useMemo(() => {
+    if (!productIdFilter || productIdFilter.length === 0) return products
+    const allow = new Set(productIdFilter.map(String))
+    return products.filter(p => allow.has(String(p.id)))
+  }, [products, productIdFilter])
+
   const filteredProducts = useMemo(() => {
     const q = searchTerm.trim().toLowerCase()
-    if (!q) return products
-    return products.filter(p =>
+    if (!q) return baseList
+    return baseList.filter(p =>
       [p.name, p.barcode, p.category].some(val => String(val || '').toLowerCase().includes(q))
     )
-  }, [products, searchTerm])
+  }, [baseList, searchTerm])
 
   const handleAddProduct = (e) => {
     e.preventDefault()
@@ -60,6 +76,20 @@ const ProductManagement = ({ products, setProducts, defaultOpenForm = false, onC
           <Plus className="h-4 w-4 mr-2" /> Add Product
         </button>
       </div>
+
+      {filterLabel && (
+        <div className="p-3 rounded-md border bg-blue-50 border-blue-200 flex items-center justify-between">
+          <span className="text-sm text-blue-900">{filterLabel}</span>
+          {onClearFilter && (
+            <button
+              onClick={onClearFilter}
+              className="text-sm underline text-blue-700 hover:text-blue-900"
+            >
+              Clear filter
+            </button>
+          )}
+        </div>
+      )}
 
       {showForm && (
         <div className="bg-white rounded-lg shadow p-4">
@@ -132,7 +162,7 @@ const ProductManagement = ({ products, setProducts, defaultOpenForm = false, onC
           <div className="text-center py-12">
             <Package className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No products</h3>
-            <p className="mt-1 text-sm text-gray-500">Get started by adding your first product.</p>
+            <p className="mt-1 text-sm text-gray-500">Try clearing the filter or search.</p>
           </div>
         ) : (
           <ul className="divide-y">
