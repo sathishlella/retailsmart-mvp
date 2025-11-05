@@ -1,12 +1,9 @@
 import React from 'react'
 import { TrendingUp, Package, AlertTriangle } from 'lucide-react'
 
-const Analytics = ({ products, batches }) => {
-  const daysUntil = (date) => {
-    const d = new Date(date)
-    const now = new Date()
-    return Math.ceil((d - now) / (1000 * 60 * 60 * 24))
-  }
+const Analytics = ({ storeMode, products, batches }) => {
+  const isFashion = storeMode === 'fashion'
+  const daysUntil = (date) => Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24))
 
   const expiredBatches = batches.filter(b => daysUntil(b.expiryDate) < 0)
   const expiringSoonBatches = batches.filter(b => {
@@ -19,11 +16,11 @@ const Analytics = ({ products, batches }) => {
 
   const cards = [
     { label: 'Total Products', value: products.length, icon: Package, cls: 'text-blue-600' },
-    { label: 'Total Batches', value: batches.length, icon: TrendingUp, cls: 'text-indigo-600' },
-    { label: 'Batches Expiring Soon', value: expiringSoonBatches.length, icon: AlertTriangle, cls: 'text-yellow-600' },
-    { label: 'Expired Batches', value: expiredBatches.length, icon: AlertTriangle, cls: 'text-red-600' },
-    { label: 'Products at Risk (Soon)', value: expiringSoonProductIds.size, icon: AlertTriangle, cls: 'text-yellow-700' },
-    { label: 'Products with Expired Items', value: expiredProductIds.size, icon: AlertTriangle, cls: 'text-red-700' },
+    { label: isFashion ? 'Total Items (Lots)' : 'Total Batches', value: batches.length, icon: TrendingUp, cls: 'text-indigo-600' },
+    { label: isFashion ? 'Going Off-Season Soon' : 'Expiring Soon', value: expiringSoonBatches.length, icon: AlertTriangle, cls: 'text-yellow-600' },
+    { label: isFashion ? 'Out of Season' : 'Expired', value: expiredBatches.length, icon: AlertTriangle, cls: 'text-red-600' },
+    { label: isFashion ? 'Product Lines at Risk (Soon)' : 'Products at Risk (Soon)', value: expiringSoonProductIds.size, icon: AlertTriangle, cls: 'text-yellow-700' },
+    { label: isFashion ? 'Product Lines with Out-of-Season Items' : 'Products with Expired Items', value: expiredProductIds.size, icon: AlertTriangle, cls: 'text-red-700' },
   ]
 
   return (
@@ -59,9 +56,17 @@ const Analytics = ({ products, batches }) => {
           </div>
         ) : (
           <ul className="list-disc pl-5 space-y-2 text-gray-700">
-            <li><strong>{expiringSoonBatches.length}</strong> batches are expiring within a week across <strong>{expiringSoonProductIds.size}</strong> products.</li>
-            <li><strong>{expiredBatches.length}</strong> batches have already expired across <strong>{expiredProductIds.size}</strong> products.</li>
-            <li>Average batches per product: <strong>{products.length === 0 ? 0 : (batches.length / products.length).toFixed(1)}</strong>.</li>
+            <li>
+              <strong>{expiringSoonBatches.length}</strong> {isFashion ? 'item lots going off-season within a week' : 'batches expiring within a week'}
+              {' '}across <strong>{expiringSoonProductIds.size}</strong> {isFashion ? 'product lines' : 'products'}.
+            </li>
+            <li>
+              <strong>{expiredBatches.length}</strong> {isFashion ? 'out-of-season item lots' : 'expired batches'}
+              {' '}across <strong>{expiredProductIds.size}</strong> {isFashion ? 'product lines' : 'products'}.
+            </li>
+            <li>
+              Average lots per product: <strong>{products.length === 0 ? 0 : (batches.length / products.length).toFixed(1)}</strong>.
+            </li>
           </ul>
         )}
       </div>
