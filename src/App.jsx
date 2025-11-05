@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  Package, 
-  AlertTriangle, 
-  Plus, 
-  Trash2, 
-  Calendar,
-  BarChart3,
-  Store,
-  CheckCircle
-} from 'lucide-react'
+import { Package, BarChart3, Calendar, Store } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import ProductManagement from './components/ProductManagement'
 import BatchTracking from './components/BatchTracking'
@@ -19,21 +10,35 @@ function App() {
   const [products, setProducts] = useState([])
   const [batches, setBatches] = useState([])
 
-  // Load data from localStorage on component mount
+  // Helpers
+  const safeParse = (val, fallback) => {
+    try {
+      const parsed = JSON.parse(val)
+      return Array.isArray(parsed) ? parsed : fallback
+    } catch {
+      return fallback
+    }
+  }
+
+  // Load data from localStorage on mount
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const savedProducts = localStorage.getItem('retailsmart-products')
     const savedBatches = localStorage.getItem('retailsmart-batches')
-    
-    if (savedProducts) setProducts(JSON.parse(savedProducts))
-    if (savedBatches) setProducts(JSON.parse(savedBatches))
+
+    if (savedProducts) setProducts(safeParse(savedProducts, []))
+    if (savedBatches) setBatches(safeParse(savedBatches, [])) // <-- fixed
   }, [])
 
-  // Save data to localStorage whenever it changes
+  // Persist to localStorage
   useEffect(() => {
+    if (typeof window === 'undefined') return
     localStorage.setItem('retailsmart-products', JSON.stringify(products))
   }, [products])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
     localStorage.setItem('retailsmart-batches', JSON.stringify(batches))
   }, [batches])
 
@@ -87,19 +92,11 @@ function App() {
             <ProductManagement products={products} setProducts={setProducts} />
           )}
           {currentView === 'batches' && (
-            <BatchTracking 
-              batches={batches} 
+            <BatchTracking
+              batches={batches}
               setBatches={setBatches}
               products={products}
             />
           )}
           {currentView === 'analytics' && (
-            <Analytics products={products} batches={batches} />
-          )}
-        </div>
-      </main>
-    </div>
-  )
-}
-
-export default App
+            <Analytics
