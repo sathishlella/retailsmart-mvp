@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 
 const BatchTracking = ({
+  storeMode,
   batches,
   setBatches,
   products,
   defaultOpenForm = false,
   onCloseForm,
-  // NEW:
-  filterMode = null,     // 'expiringSoon' | 'expired' | null
+  filterMode = null,
   filterLabel = null,
   onClearFilter = null
 }) => {
@@ -20,6 +20,8 @@ const BatchTracking = ({
     location: 'Front Shelf',
   })
 
+  const isFashion = storeMode === 'fashion'
+
   useEffect(() => {
     if (defaultOpenForm) setShowForm(true)
   }, [defaultOpenForm])
@@ -27,10 +29,9 @@ const BatchTracking = ({
     if (!showForm && defaultOpenForm && onCloseForm) onCloseForm()
   }, [showForm])
 
-  // Prefill expiry date from product shelfLife when selecting a product
+  // Prefill date from product shelfLife when selecting a product
   useEffect(() => {
-    if (!newBatch.productId) return
-    if (newBatch.expiryDate) return
+    if (!newBatch.productId || newBatch.expiryDate) return
     const prod = products.find(p => String(p.id) === String(newBatch.productId))
     if (!prod) return
     const d = new Date()
@@ -69,20 +70,16 @@ const BatchTracking = ({
   const getBatchStatus = (expiryDate) => {
     const d = daysUntil(expiryDate)
     if (isNaN(d)) return { label: 'Unknown', cls: 'bg-gray-100 text-gray-700' }
-    if (d < 0) return { label: 'Expired', cls: 'bg-red-100 text-red-700' }
-    if (d <= 7) return { label: 'Expiring soon', cls: 'bg-yellow-100 text-yellow-700' }
-    return { label: 'Fresh', cls: 'bg-green-100 text-green-700' }
+    if (d < 0) return { label: isFashion ? 'Out of season' : 'Expired', cls: 'bg-red-100 text-red-700' }
+    if (d <= 7) return { label: isFashion ? 'Going off-season soon' : 'Expiring soon', cls: 'bg-yellow-100 text-yellow-700' }
+    return { label: isFashion ? 'In season' : 'Fresh', cls: 'bg-green-100 text-green-700' }
   }
 
   const batchesWithProduct = useMemo(() => {
     const byId = new Map(products.map(p => [String(p.id), p]))
     let list = batches.map(b => ({ ...b, product: byId.get(String(b.productId)) }))
-
     if (filterMode === 'expiringSoon') {
-      list = list.filter(b => {
-        const d = daysUntil(b.expiryDate)
-        return d <= 7 && d > 0
-      })
+      list = list.filter(b => { const d = daysUntil(b.expiryDate); return d <= 7 && d > 0 })
     } else if (filterMode === 'expired') {
       list = list.filter(b => daysUntil(b.expiryDate) < 0)
     }
@@ -151,7 +148,9 @@ const BatchTracking = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {isFashion ? 'Season End' : 'Expiry Date'}
+              </label>
               <input
                 type="date"
                 className="mt-1 w-full rounded-md border-gray-300"
@@ -193,7 +192,7 @@ const BatchTracking = ({
                 <div>
                   <p className="font-medium text-gray-900">{b.product?.name || 'Unknown product'}</p>
                   <p className="text-sm text-gray-500">
-                    Qty {b.quantity} • Expires {b.expiryDate || '—'} • {b.location}
+                    Qty {b.quantity} • {isFashion ? 'Season ends' : 'Expires'} {b.expiryDate || '—'} • {b.location}
                   </p>
                 </div>
                 <div className="flex items-center space-x-4">
