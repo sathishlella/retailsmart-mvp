@@ -17,11 +17,11 @@ function App() {
   const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
   const toYMD = (d) => new Date(d).toISOString().slice(0, 10)
   const daysUntil = (date) => Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24))
+  const isFashion = storeMode === 'fashion'
 
   // -------------------------------
   // SAMPLE PRODUCT SETS
   // -------------------------------
-
   const groceryProducts = [
     { name: 'Whole Milk 1L', category: 'Dairy', shelfLife: 7 },
     { name: 'Eggs 12-pack', category: 'Dairy', shelfLife: 21 },
@@ -83,6 +83,7 @@ function App() {
           id: `B-${p.id}-${j + 1}`,
           productId: p.id,
           quantity: randInt(1, 20),
+          // Keep field name "expiryDate" for code reuse; we rename in UI to "Season End" for fashion
           expiryDate: toYMD(exp),
           location: locs[randInt(0, locs.length - 1)],
         })
@@ -136,23 +137,43 @@ function App() {
     [expiredBatches]
   )
 
-  // --------- Dashboard click handlers ---------
+  // --------- Dashboard click handlers (mode-aware labels) ---------
   const openAllProducts = () => { setListFilter({ target: 'products', ids: null, label: null }); setCurrentView('products') }
   const openAllBatches = () => { setListFilter({ target: 'batches', type: null, label: null }); setCurrentView('batches') }
   const openProductsAtRiskSoon = () => {
-    setListFilter({ target: 'products', ids: productsAtRiskSoonIds, label: 'Products with batches expiring soon' })
+    setListFilter({
+      target: 'products',
+      ids: productsAtRiskSoonIds,
+      label: isFashion ? 'Products with items going off-season within 7 days'
+                       : 'Products with batches expiring within 7 days'
+    })
     setCurrentView('products')
   }
   const openProductsWithExpired = () => {
-    setListFilter({ target: 'products', ids: productsWithExpiredIds, label: 'Products with expired batches' })
+    setListFilter({
+      target: 'products',
+      ids: productsWithExpiredIds,
+      label: isFashion ? 'Products with out-of-season items'
+                       : 'Products with expired batches'
+    })
     setCurrentView('products')
   }
   const openBatchesExpiringSoon = () => {
-    setListFilter({ target: 'batches', type: 'expiringSoon', label: 'Batches expiring within 7 days' })
+    setListFilter({
+      target: 'batches',
+      type: 'expiringSoon',
+      label: isFashion ? 'Items going off-season within 7 days'
+                       : 'Batches expiring within 7 days'
+    })
     setCurrentView('batches')
   }
   const openBatchesExpired = () => {
-    setListFilter({ target: 'batches', type: 'expired', label: 'Expired batches' })
+    setListFilter({
+      target: 'batches',
+      type: 'expired',
+      label: isFashion ? 'Out-of-season items'
+                       : 'Expired batches'
+    })
     setCurrentView('batches')
   }
   const clearFilter = () => setListFilter(null)
@@ -172,6 +193,7 @@ function App() {
     setStoreMode(newMode)
     handleResetDemoData(newMode)
     setCurrentView('dashboard')
+    setListFilter(null)
   }
 
   return (
@@ -181,13 +203,13 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              {storeMode === 'grocery' ? (
-                <ShoppingBag className="h-7 w-7 text-blue-600" />
-              ) : (
+              {isFashion ? (
                 <Shirt className="h-7 w-7 text-pink-600" />
+              ) : (
+                <ShoppingBag className="h-7 w-7 text-blue-600" />
               )}
               <h1 className="text-xl font-bold text-gray-900">
-                RetailSmart — {storeMode === 'grocery' ? 'Grocery Store' : 'Fashion Store'}
+                RetailSmart — {isFashion ? 'Fashion Store' : 'Grocery Store'}
               </h1>
             </div>
             <div className="flex items-center space-x-6">
@@ -198,14 +220,14 @@ function App() {
                   <input
                     type="checkbox"
                     className="sr-only peer"
-                    checked={storeMode === 'fashion'}
+                    checked={isFashion}
                     onChange={toggleMode}
                   />
                   <div className="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-pink-500 transition-all"></div>
                   <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow peer-checked:translate-x-5 transition-all"></div>
                 </div>
                 <span className="ml-2 text-sm text-gray-700">
-                  {storeMode === 'grocery' ? 'Grocery' : 'Fashion'}
+                  {isFashion ? 'Fashion' : 'Grocery'}
                 </span>
               </label>
               <nav className="flex space-x-4">
@@ -236,6 +258,7 @@ function App() {
         <div className="px-4 py-6 sm:px-0">
           {currentView === 'dashboard' && (
             <Dashboard
+              storeMode={storeMode}
               products={products}
               batches={batches}
               onAddProduct={() => { setCurrentView('products'); setOpenProductForm(true) }}
@@ -263,6 +286,7 @@ function App() {
           )}
           {currentView === 'batches' && (
             <BatchTracking
+              storeMode={storeMode}
               batches={batches}
               setBatches={setBatches}
               products={products}
@@ -273,7 +297,9 @@ function App() {
               onClearFilter={clearFilter}
             />
           )}
-          {currentView === 'analytics' && <Analytics products={products} batches={batches} />}
+          {currentView === 'analytics' && (
+            <Analytics storeMode={storeMode} products={products} batches={batches} />
+          )}
         </div>
       </main>
     </div>
