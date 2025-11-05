@@ -17,7 +17,6 @@ function App() {
   const toYMD = (d) => new Date(d).toISOString().slice(0, 10)
 
   // ---------- 120+ sample products ----------
-  // shelfLife in days (roughly)
   const sampleProducts = [
     // Dairy
     { name: 'Whole Milk 1L', category: 'Dairy', shelfLife: 7 },
@@ -34,7 +33,6 @@ function App() {
     { name: 'Cream 200ml', category: 'Dairy', shelfLife: 10 },
     { name: 'Eggs 12-pack', category: 'Dairy', shelfLife: 21 },
     { name: 'Eggs 6-pack', category: 'Dairy', shelfLife: 21 },
-
     // Beverages (non-alcohol)
     { name: 'Orange Juice 1L', category: 'Beverages', shelfLife: 20 },
     { name: 'Apple Juice 1L', category: 'Beverages', shelfLife: 20 },
@@ -46,8 +44,7 @@ function App() {
     { name: 'Sparkling Water 1L', category: 'Beverages', shelfLife: 365 },
     { name: 'Mineral Water 1L', category: 'Beverages', shelfLife: 365 },
     { name: 'Cold Brew Coffee 300ml', category: 'Beverages', shelfLife: 30 },
-
-    // Liquor / Alcoholic Beverages
+    // Liquor
     { name: 'Whiskey 750ml', category: 'Liquor', shelfLife: 3650 },
     { name: 'Vodka 750ml', category: 'Liquor', shelfLife: 3650 },
     { name: 'Rum 750ml', category: 'Liquor', shelfLife: 3650 },
@@ -58,7 +55,6 @@ function App() {
     { name: 'Beer 6-pack 330ml', category: 'Liquor', shelfLife: 180 },
     { name: 'Craft IPA 4-pack 440ml', category: 'Liquor', shelfLife: 150 },
     { name: 'Cider 6-pack 330ml', category: 'Liquor', shelfLife: 180 },
-
     // Bakery
     { name: 'White Bread Loaf', category: 'Bakery', shelfLife: 5 },
     { name: 'Whole Wheat Bread Loaf', category: 'Bakery', shelfLife: 6 },
@@ -68,7 +64,6 @@ function App() {
     { name: 'Brioche Buns 6-pack', category: 'Bakery', shelfLife: 5 },
     { name: 'English Muffins 6-pack', category: 'Bakery', shelfLife: 5 },
     { name: 'Tortillas 10-pack', category: 'Bakery', shelfLife: 14 },
-
     // Produce
     { name: 'Apples 1kg', category: 'Produce', shelfLife: 30 },
     { name: 'Bananas 1kg', category: 'Produce', shelfLife: 7 },
@@ -87,7 +82,6 @@ function App() {
     { name: 'Mushrooms 200g', category: 'Produce', shelfLife: 5 },
     { name: 'Lettuce Head', category: 'Produce', shelfLife: 7 },
     { name: 'Avocado 2-pack', category: 'Produce', shelfLife: 5 },
-
     // Snacks
     { name: 'Potato Chips 150g', category: 'Snacks', shelfLife: 180 },
     { name: 'Tortilla Chips 200g', category: 'Snacks', shelfLife: 180 },
@@ -98,7 +92,6 @@ function App() {
     { name: 'Granola Bars 6-pack', category: 'Snacks', shelfLife: 270 },
     { name: 'Popcorn 3-pack', category: 'Snacks', shelfLife: 365 },
     { name: 'Crackers 200g', category: 'Snacks', shelfLife: 270 },
-
     // Frozen
     { name: 'Frozen Peas 500g', category: 'Frozen', shelfLife: 365 },
     { name: 'Frozen Corn 500g', category: 'Frozen', shelfLife: 365 },
@@ -107,7 +100,6 @@ function App() {
     { name: 'Ice Cream 1L', category: 'Frozen', shelfLife: 180 },
     { name: 'Frozen Chicken Nuggets 1kg', category: 'Frozen', shelfLife: 365 },
     { name: 'Frozen Fish Fillets 500g', category: 'Frozen', shelfLife: 365 },
-
     // Meat
     { name: 'Chicken Breast 500g', category: 'Meat', shelfLife: 5 },
     { name: 'Chicken Thighs 500g', category: 'Meat', shelfLife: 5 },
@@ -116,13 +108,11 @@ function App() {
     { name: 'Pork Chops 500g', category: 'Meat', shelfLife: 5 },
     { name: 'Bacon 250g', category: 'Meat', shelfLife: 14 },
     { name: 'Sausages 400g', category: 'Meat', shelfLife: 14 },
-
     // Seafood
     { name: 'Salmon Fillet 300g', category: 'Seafood', shelfLife: 3 },
     { name: 'Shrimp 500g', category: 'Seafood', shelfLife: 5 },
     { name: 'Tuna Steak 300g', category: 'Seafood', shelfLife: 3 },
     { name: 'Mackerel 400g', category: 'Seafood', shelfLife: 3 },
-
     // Pantry
     { name: 'Basmati Rice 5kg', category: 'Pantry', shelfLife: 365 },
     { name: 'Brown Rice 2kg', category: 'Pantry', shelfLife: 365 },
@@ -152,7 +142,6 @@ function App() {
     { name: 'Mayonnaise 400g', category: 'Pantry', shelfLife: 180 },
     { name: 'Mustard 200g', category: 'Pantry', shelfLife: 365 },
     { name: 'Soya Sauce 500ml', category: 'Pantry', shelfLife: 365 },
-
     // Household
     { name: 'Laundry Detergent 1L', category: 'Household', shelfLife: 1095 },
     { name: 'Dishwashing Liquid 750ml', category: 'Household', shelfLife: 1095 },
@@ -161,7 +150,6 @@ function App() {
     { name: 'Toilet Paper 12-pack', category: 'Household', shelfLife: 3650 },
     { name: 'Garbage Bags 30-pack', category: 'Household', shelfLife: 3650 },
     { name: 'Aluminum Foil 25m', category: 'Household', shelfLife: 3650 },
-
     // Personal Care
     { name: 'Shampoo 400ml', category: 'Personal Care', shelfLife: 365 },
     { name: 'Conditioner 400ml', category: 'Personal Care', shelfLife: 365 },
@@ -171,8 +159,7 @@ function App() {
     { name: 'Hand Soap 250ml', category: 'Personal Care', shelfLife: 365 },
     { name: 'Deodorant 150ml', category: 'Personal Care', shelfLife: 365 },
     { name: 'Lotion 250ml', category: 'Personal Care', shelfLife: 365 },
-
-    // More variety to surpass 120 items
+    // Extra to surpass 120 items
     { name: 'Brown Bread Loaf', category: 'Bakery', shelfLife: 6 },
     { name: 'Sourdough Bread', category: 'Bakery', shelfLife: 6 },
     { name: 'Mango Juice 1L', category: 'Beverages', shelfLife: 30 },
@@ -204,7 +191,6 @@ function App() {
     { name: 'Kimchi 400g', category: 'Pantry', shelfLife: 120 },
   ]
 
-  // ---------- Seed data if localStorage empty ----------
   function seedSampleData() {
     const now = new Date()
     const prods = sampleProducts.map((p, idx) => ({
@@ -219,9 +205,8 @@ function App() {
     for (const p of prods) {
       const batchesForP = randInt(1, 3)
       for (let j = 0; j < batchesForP; j++) {
-        // For realism: clamp max future expiry by product shelfLife (but not huge)
         const maxFuture = Math.min(180, p.shelfLife)
-        const offsetDays = randInt(-30, Math.max(7, maxFuture)) // mix of expired/soon/future
+        const offsetDays = randInt(-30, Math.max(7, maxFuture))
         const exp = new Date(now)
         exp.setDate(exp.getDate() + offsetDays)
         bchs.push({
@@ -236,7 +221,22 @@ function App() {
     return { prods, bchs }
   }
 
-  // Load / seed
+  // Reset demo data (clears storage and reseeds)
+  const handleResetDemoData = () => {
+    if (typeof window === 'undefined') return
+    // simple confirm to avoid mis-clicks
+    // eslint-disable-next-line no-alert
+    const ok = window.confirm('Reset demo data? This will replace current products & batches.')
+    if (!ok) return
+    const { prods, bchs } = seedSampleData()
+    setProducts(prods)
+    setBatches(bchs)
+    localStorage.setItem('retailsmart-products', JSON.stringify(prods))
+    localStorage.setItem('retailsmart-batches', JSON.stringify(bchs))
+    setCurrentView('dashboard')
+  }
+
+  // Load / seed on first run
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
@@ -264,7 +264,6 @@ function App() {
     if (typeof window === 'undefined') return
     localStorage.setItem('retailsmart-products', JSON.stringify(products))
   }, [products])
-
   useEffect(() => {
     if (typeof window === 'undefined') return
     localStorage.setItem('retailsmart-batches', JSON.stringify(batches))
@@ -320,6 +319,7 @@ function App() {
               onAddProduct={() => { setCurrentView('products'); setOpenProductForm(true) }}
               onAddBatch={() => { setCurrentView('batches'); setOpenBatchForm(true) }}
               onViewAnalytics={() => setCurrentView('analytics')}
+              onResetDemoData={handleResetDemoData}   // <-- new
             />
           )}
           {currentView === 'products' && (
