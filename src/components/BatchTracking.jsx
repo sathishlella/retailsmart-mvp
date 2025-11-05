@@ -1,7 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 
-const BatchTracking = ({ batches, setBatches, products, defaultOpenForm = false, onCloseForm }) => {
+const BatchTracking = ({
+  batches,
+  setBatches,
+  products,
+  defaultOpenForm = false,
+  onCloseForm,
+  // NEW:
+  filterMode = null,     // 'expiringSoon' | 'expired' | null
+  filterLabel = null,
+  onClearFilter = null
+}) => {
   const [showForm, setShowForm] = useState(Boolean(defaultOpenForm))
   const [newBatch, setNewBatch] = useState({
     productId: '',
@@ -28,6 +38,12 @@ const BatchTracking = ({ batches, setBatches, products, defaultOpenForm = false,
     setNewBatch(prev => ({ ...prev, expiryDate: d.toISOString().slice(0, 10) }))
   }, [newBatch.productId, products])
 
+  const daysUntil = (date) => {
+    const d = new Date(date)
+    const now = new Date()
+    return Math.ceil((d - now) / (1000 * 60 * 60 * 24))
+  }
+
   const handleAddBatch = (e) => {
     e.preventDefault()
     if (!newBatch.productId || !newBatch.expiryDate) return
@@ -51,19 +67,27 @@ const BatchTracking = ({ batches, setBatches, products, defaultOpenForm = false,
   }
 
   const getBatchStatus = (expiryDate) => {
-    const exp = new Date(expiryDate)
-    const now = new Date()
-    const days = Math.ceil((exp - now) / (1000 * 60 * 60 * 24))
-    if (isNaN(days)) return { label: 'Unknown', cls: 'bg-gray-100 text-gray-700' }
-    if (days < 0) return { label: 'Expired', cls: 'bg-red-100 text-red-700' }
-    if (days <= 7) return { label: 'Expiring soon', cls: 'bg-yellow-100 text-yellow-700' }
+    const d = daysUntil(expiryDate)
+    if (isNaN(d)) return { label: 'Unknown', cls: 'bg-gray-100 text-gray-700' }
+    if (d < 0) return { label: 'Expired', cls: 'bg-red-100 text-red-700' }
+    if (d <= 7) return { label: 'Expiring soon', cls: 'bg-yellow-100 text-yellow-700' }
     return { label: 'Fresh', cls: 'bg-green-100 text-green-700' }
   }
 
   const batchesWithProduct = useMemo(() => {
     const byId = new Map(products.map(p => [String(p.id), p]))
-    return batches.map(b => ({ ...b, product: byId.get(String(b.productId)) }))
-  }, [batches, products])
+    let list = batches.map(b => ({ ...b, product: byId.get(String(b.productId)) }))
+
+    if (filterMode === 'expiringSoon') {
+      list = list.filter(b => {
+        const d = daysUntil(b.expiryDate)
+        return d <= 7 && d > 0
+      })
+    } else if (filterMode === 'expired') {
+      list = list.filter(b => daysUntil(b.expiryDate) < 0)
+    }
+    return list
+  }, [batches, products, filterMode])
 
   return (
     <div className="space-y-6">
@@ -78,6 +102,20 @@ const BatchTracking = ({ batches, setBatches, products, defaultOpenForm = false,
           <Plus className="h-4 w-4 mr-2" /> Add Batch
         </button>
       </div>
+
+      {filterLabel && (
+        <div className="p-3 rounded-md border bg-blue-50 border-blue-200 flex items-center justify-between">
+          <span className="text-sm text-blue-900">{filterLabel}</span>
+          {onClearFilter && (
+            <button
+              onClick={onClearFilter}
+              className="text-sm underline text-blue-700 hover:text-blue-900"
+            >
+              Clear filter
+            </button>
+          )}
+        </div>
+      )}
 
       {products.length === 0 && (
         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -146,7 +184,7 @@ const BatchTracking = ({ batches, setBatches, products, defaultOpenForm = false,
 
       <div className="bg-white rounded-lg shadow divide-y">
         {batchesWithProduct.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">No batches yet.</div>
+          <div className="p-6 text-center text-gray-500">No batches to show.</div>
         ) : (
           batchesWithProduct.map(b => {
             const status = getBatchStatus(b.expiryDate)
