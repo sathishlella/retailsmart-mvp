@@ -10,25 +10,23 @@ function App() {
   const [products, setProducts] = useState([])
   const [batches, setBatches] = useState([])
 
-  // Helpers
+  // safe JSON parse helper
   const safeParse = (val, fallback) => {
     try {
-      const parsed = JSON.parse(val)
-      return Array.isArray(parsed) ? parsed : fallback
+      const out = JSON.parse(val)
+      return Array.isArray(out) ? out : fallback
     } catch {
       return fallback
     }
   }
 
-  // Load data from localStorage on mount
+  // Load from localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return
-
     const savedProducts = localStorage.getItem('retailsmart-products')
     const savedBatches = localStorage.getItem('retailsmart-batches')
-
     if (savedProducts) setProducts(safeParse(savedProducts, []))
-    if (savedBatches) setBatches(safeParse(savedBatches, [])) // <-- fixed
+    if (savedBatches) setBatches(safeParse(savedBatches, [])) // fixed: setBatches
   }, [])
 
   // Persist to localStorage
@@ -99,4 +97,12 @@ function App() {
             />
           )}
           {currentView === 'analytics' && (
-            <Analytics
+            <Analytics products={products} batches={batches} />
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default App
