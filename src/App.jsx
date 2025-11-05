@@ -179,3 +179,10 @@ function App() {
           {currentView === 'analytics' && (
             <Analytics products={products} batches={batches} />
           )}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default App
