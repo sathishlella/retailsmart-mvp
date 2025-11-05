@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Package, BarChart3, Calendar, Store } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import ProductManagement from './components/ProductManagement'
@@ -12,11 +12,21 @@ function App() {
   const [openProductForm, setOpenProductForm] = useState(false)
   const [openBatchForm, setOpenBatchForm] = useState(false)
 
+  // Centralized UI filter state driven by Dashboard clicks
+  // - For products: { target:'products', type:'atRiskSoon'|'expired'|null, ids?:string[], label?:string }
+  // - For batches:  { target:'batches',  type:'expiringSoon'|'expired'|null, label?:string }
+  const [listFilter, setListFilter] = useState(null)
+
   // ---------- Helpers ----------
   const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
   const toYMD = (d) => new Date(d).toISOString().slice(0, 10)
+  const daysUntil = (date) => {
+    const d = new Date(date)
+    const now = new Date()
+    return Math.ceil((d - now) / (1000 * 60 * 60 * 24))
+  }
 
-  // ---------- 120+ sample products ----------
+  // ---------- Sample catalog (120+ items) ----------
   const sampleProducts = [
     // Dairy
     { name: 'Whole Milk 1L', category: 'Dairy', shelfLife: 7 },
@@ -159,7 +169,7 @@ function App() {
     { name: 'Hand Soap 250ml', category: 'Personal Care', shelfLife: 365 },
     { name: 'Deodorant 150ml', category: 'Personal Care', shelfLife: 365 },
     { name: 'Lotion 250ml', category: 'Personal Care', shelfLife: 365 },
-    // Extra to surpass 120 items
+    // Extra
     { name: 'Brown Bread Loaf', category: 'Bakery', shelfLife: 6 },
     { name: 'Sourdough Bread', category: 'Bakery', shelfLife: 6 },
     { name: 'Mango Juice 1L', category: 'Beverages', shelfLife: 30 },
@@ -201,6 +211,7 @@ function App() {
       shelfLife: p.shelfLife
     }))
 
+    const locs = ['Front Shelf', 'Back Shelf', 'Cold Storage', 'Warehouse']
     const bchs = []
     for (const p of prods) {
       const batchesForP = randInt(1, 3)
@@ -214,17 +225,16 @@ function App() {
           productId: p.id,
           quantity: randInt(5, 50),
           expiryDate: toYMD(exp),
-          location: ['Front Shelf', 'Back Shelf', 'Cold Storage', 'Warehouse'][randInt(0, 3)]
+          location: locs[randInt(0, locs.length - 1)]
         })
       }
     }
     return { prods, bchs }
   }
 
-  // Reset demo data (clears storage and reseeds)
+  // Reset demo data
   const handleResetDemoData = () => {
     if (typeof window === 'undefined') return
-    // simple confirm to avoid mis-clicks
     // eslint-disable-next-line no-alert
     const ok = window.confirm('Reset demo data? This will replace current products & batches.')
     if (!ok) return
@@ -234,6 +244,7 @@ function App() {
     localStorage.setItem('retailsmart-products', JSON.stringify(prods))
     localStorage.setItem('retailsmart-batches', JSON.stringify(bchs))
     setCurrentView('dashboard')
+    setListFilter(null)
   }
 
   // Load / seed on first run
@@ -269,6 +280,62 @@ function App() {
     localStorage.setItem('retailsmart-batches', JSON.stringify(batches))
   }, [batches])
 
+  // --------- Derived risk sets for click handlers ---------
+  const expiringSoonBatches = useMemo(
+    () => batches.filter(b => { const d = daysUntil(b.expiryDate); return d <= 7 && d > 0 }),
+    [batches]
+  )
+  const expiredBatches = useMemo(
+    () => batches.filter(b => daysUntil(b.expiryDate) < 0),
+    [batches]
+  )
+  const productsAtRiskSoonIds = useMemo(
+    () => Array.from(new Set(expiringSoonBatches.map(b => String(b.productId)))),
+    [expiringSoonBatches]
+  )
+  const productsWithExpiredIds = useMemo(
+    () => Array.from(new Set(expiredBatches.map(b => String(b.productId)))),
+    [expiredBatches]
+  )
+
+  // --------- Dashboard click handlers ---------
+  const openAllProducts = () => {
+    setListFilter({ target: 'products', type: null, ids: null, label: null })
+    setCurrentView('products')
+  }
+  const openAllBatches = () => {
+    setListFilter({ target: 'batches', type: null, label: null })
+    setCurrentView('batches')
+  }
+  const openProductsAtRiskSoon = () => {
+    setListFilter({
+      target: 'products',
+      type: 'atRiskSoon',
+      ids: productsAtRiskSoonIds,
+      label: 'Products with at least one batch expiring within 7 days'
+    })
+    setCurrentView('products')
+  }
+  const openProductsWithExpired = () => {
+    setListFilter({
+      target: 'products',
+      type: 'expired',
+      ids: productsWithExpiredIds,
+      label: 'Products with at least one expired batch'
+    })
+    setCurrentView('products')
+  }
+  const openBatchesExpiringSoon = () => {
+    setListFilter({ target: 'batches', type: 'expiringSoon', label: 'Batches expiring within 7 days' })
+    setCurrentView('batches')
+  }
+  const openBatchesExpired = () => {
+    setListFilter({ target: 'batches', type: 'expired', label: 'Expired batches' })
+    setCurrentView('batches')
+  }
+
+  const clearFilter = () => setListFilter(null)
+
   const navigation = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'products', label: 'Products', icon: Package },
@@ -292,7 +359,7 @@ function App() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setCurrentView(item.id)}
+                    onClick={() => { setCurrentView(item.id); setListFilter(null) }}
                     className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                       currentView === item.id
                         ? 'text-blue-600 bg-blue-50'
@@ -319,7 +386,14 @@ function App() {
               onAddProduct={() => { setCurrentView('products'); setOpenProductForm(true) }}
               onAddBatch={() => { setCurrentView('batches'); setOpenBatchForm(true) }}
               onViewAnalytics={() => setCurrentView('analytics')}
-              onResetDemoData={handleResetDemoData}   // <-- new
+              onResetDemoData={handleResetDemoData}
+              // NEW: click handlers for stat cards
+              onOpenAllProducts={openAllProducts}
+              onOpenAllBatches={openAllBatches}
+              onOpenProductsAtRiskSoon={openProductsAtRiskSoon}
+              onOpenProductsWithExpired={openProductsWithExpired}
+              onOpenBatchesExpiringSoon={openBatchesExpiringSoon}
+              onOpenBatchesExpired={openBatchesExpired}
             />
           )}
           {currentView === 'products' && (
@@ -328,6 +402,9 @@ function App() {
               setProducts={setProducts}
               defaultOpenForm={openProductForm}
               onCloseForm={() => setOpenProductForm(false)}
+              productIdFilter={listFilter?.target === 'products' ? listFilter?.ids : null}
+              filterLabel={listFilter?.target === 'products' ? listFilter?.label : null}
+              onClearFilter={clearFilter}
             />
           )}
           {currentView === 'batches' && (
@@ -337,6 +414,9 @@ function App() {
               products={products}
               defaultOpenForm={openBatchForm}
               onCloseForm={() => setOpenBatchForm(false)}
+              filterMode={listFilter?.target === 'batches' ? listFilter?.type : null}
+              filterLabel={listFilter?.target === 'batches' ? listFilter?.label : null}
+              onClearFilter={clearFilter}
             />
           )}
           {currentView === 'analytics' && (
